@@ -136,6 +136,7 @@ doc_events = {
 scheduler_events = {
 	"all": [
 		"lms.sqlite.build_index_in_background",
+		"lms.lms.telemetry.flush_pending_events",
 	],
 	"hourly": [
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.schedule_evals",

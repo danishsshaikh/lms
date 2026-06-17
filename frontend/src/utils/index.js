@@ -553,6 +553,30 @@ const getSidebarItems = (forMobile = false) => {
 			],
 		},
 		{
+			label: 'Integrations',
+			hideLabel: false,
+			items: [
+				{
+					label: 'Integrations',
+					icon: 'Plug',
+					to: 'Integrations',
+					activeFor: ['Integrations'],
+					condition: () => {
+						return userResource?.data?.is_system_manager
+					},
+				},
+				{
+					label: 'Sunbird Telemetry',
+					icon: 'Activity',
+					to: 'SunbirdTelemetry',
+					activeFor: ['SunbirdTelemetry'],
+					condition: () => {
+						return canViewSunbirdTelemetry()
+					},
+				},
+			],
+		},
+		{
 			label: 'Assessments',
 			hideLabel: true,
 			items: [
@@ -607,7 +631,18 @@ const isAdmin = () => {
 	return (
 		userResource?.data?.is_instructor ||
 		userResource?.data?.is_moderator ||
+		userResource?.data?.is_system_manager ||
 		userResource.data?.is_evaluator
+	)
+}
+
+const canViewSunbirdTelemetry = () => {
+	const { userResource } = usersStore()
+	return (
+		userResource?.data?.is_sunbird_telemetry_enabled &&
+		(userResource?.data?.is_system_manager ||
+			userResource?.data?.is_moderator ||
+			userResource?.data?.is_instructor)
 	)
 }
 

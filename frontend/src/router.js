@@ -3,6 +3,7 @@ import { usersStore } from './stores/user'
 import { sessionStore } from './stores/session'
 import { useSettings } from './stores/settings'
 import { getLmsBasePath } from './utils/basePath'
+import { getRouteTelemetryContext, trackClientEvent } from './utils/telemetry'
 
 const routes = [
 	{
@@ -64,6 +65,20 @@ const routes = [
 		path: '/statistics',
 		name: 'Statistics',
 		component: () => import('@/pages/Statistics.vue'),
+	},
+	{
+		path: '/integrations',
+		name: 'Integrations',
+		component: () => import('@/pages/SunbirdIntegrations.vue'),
+	},
+	{
+		path: '/sunbird-telemetry',
+		name: 'SunbirdTelemetry',
+		component: () => import('@/pages/TelemetryLogs.vue'),
+	},
+	{
+		path: '/telemetry-logs',
+		redirect: { name: 'SunbirdTelemetry' },
 	},
 	{
 		path: '/user/:username',
@@ -270,6 +285,15 @@ router.beforeEach(async (to, from, next) => {
 		}
 	}
 	return next()
+})
+
+router.afterEach((to) => {
+	trackClientEvent({
+		event_type: 'route_viewed',
+		context: getRouteTelemetryContext(to),
+		object_type: 'Route',
+		object_id: to.name,
+	})
 })
 
 export default router

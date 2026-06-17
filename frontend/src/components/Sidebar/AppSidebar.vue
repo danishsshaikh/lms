@@ -9,15 +9,15 @@
 		>
 			<UserDropdown :isCollapsed="sidebarStore.isSidebarCollapsed" />
 			<div class="flex flex-col" v-if="sidebarSettings.data">
-				<div v-for="link in sidebarLinks" class="mx-2 my-2.5">
+				<div v-for="link in sidebarLinks" :key="link.label" class="mx-2 my-2.5">
 					<div
-						v-if="!link.hideLabel"
+						v-if="!link.hideLabel && !sidebarStore.isSidebarCollapsed"
 						class="mb-2 mt-3 flex cursor-pointer gap-1.5 px-1 text-base-medium text-ink-gray-5 transition-all duration-300 ease-in-out"
 					>
 						<span>{{ __(link.label) }}</span>
 					</div>
 					<nav class="space-y-1">
-						<div v-for="item in link.items">
+						<div v-for="item in link.items" :key="item.label">
 							<SidebarLink
 								:link="item"
 								:isCollapsed="sidebarStore.isSidebarCollapsed"
@@ -330,6 +330,7 @@ onMounted(() => {
 	setUpOnboarding()
 	addKeyboardShortcut()
 	updateSidebarLinks()
+	window.addEventListener('lms:sunbird-telemetry-toggle', updateSidebarLinks)
 	socket.on('publish_lms_notifications', (data) => {
 		unreadNotifications.reload()
 	})
@@ -717,6 +718,7 @@ const redirectToAppointmentScreen = () => {
 }
 
 onUnmounted(() => {
+	window.removeEventListener('lms:sunbird-telemetry-toggle', updateSidebarLinks)
 	socket.off('publish_lms_notifications')
 })
 </script>

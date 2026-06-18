@@ -77,6 +77,11 @@ const routes = [
 		component: () => import('@/pages/TelemetryLogs.vue'),
 	},
 	{
+		path: '/sunbird-certificates',
+		name: 'SunbirdCertificates',
+		component: () => import('@/pages/SunbirdCertificates.vue'),
+	},
+	{
 		path: '/telemetry-logs',
 		redirect: { name: 'SunbirdTelemetry' },
 	},

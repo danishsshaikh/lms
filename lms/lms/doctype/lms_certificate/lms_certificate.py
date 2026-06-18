@@ -20,6 +20,15 @@ class LMSCertificate(Document):
 
 	def after_insert(self):
 		capture("certificate_issued", "lms")
+		try:
+			from lms.lms.verifiable_credentials import issue_credential_for_certificate
+
+			issue_credential_for_certificate(self)
+		except Exception:
+			frappe.log_error(
+				title="Sunbird RC credential hook failed",
+				message=frappe.get_traceback(),
+			)
 		self.send_certification_email()
 
 	def send_certification_email(self):

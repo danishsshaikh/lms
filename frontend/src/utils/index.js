@@ -574,6 +574,15 @@ const getSidebarItems = (forMobile = false) => {
 						return canViewSunbirdTelemetry()
 					},
 				},
+				{
+					label: 'Sunbird RC Certificates',
+					icon: 'BadgeCheck',
+					to: 'SunbirdCertificates',
+					activeFor: ['SunbirdCertificates'],
+					condition: () => {
+						return canViewSunbirdCertificates()
+					},
+				},
 			],
 		},
 		{
@@ -643,6 +652,17 @@ const canViewSunbirdTelemetry = () => {
 		(userResource?.data?.is_system_manager ||
 			userResource?.data?.is_moderator ||
 			userResource?.data?.is_instructor)
+	)
+}
+
+const canViewSunbirdCertificates = () => {
+	const { userResource } = usersStore()
+	return (
+		userResource?.data?.is_sunbird_vc_enabled &&
+		(userResource?.data?.is_system_manager ||
+			userResource?.data?.is_moderator ||
+			userResource?.data?.is_instructor ||
+			userResource?.data?.is_evaluator)
 	)
 }
 

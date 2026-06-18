@@ -1,0 +1,144 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+{% set credential_id = frappe.form_dict.get("credential_id") %}
+<div class="container my-12">
+	<div class="mx-auto" style="max-width: 760px;">
+		<div class="border rounded p-8 bg-white" id="certificate-verification" data-credential-id="{{ credential_id or '' }}">
+			<div class="d-flex justify-content-between align-items-start mb-6">
+				<div>
+					<div class="text-muted mb-2">{{ _("Sunbird RC Certificate Verification") }}</div>
+					<h1 class="h3 mb-0">{{ _("Certificate") }}</h1>
+				</div>
+				<span class="badge badge-secondary" data-field="status">{{ _("Checking") }}</span>
+			</div>
+
+			<div class="alert alert-info" data-field="message">{{ _("Checking certificate status...") }}</div>
+
+			<div class="row">
+				<div class="col-sm-12 mb-4 d-none" data-field="qr_container">
+					<div class="text-muted small">{{ _("QR Code") }}</div>
+					<div class="mt-2" style="max-width: 9rem;" data-field="qr_svg"></div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Member") }}</div>
+					<div class="font-weight-bold" data-field="member_name">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Issuer") }}</div>
+					<div class="font-weight-bold" data-field="issuer">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Course") }}</div>
+					<div class="font-weight-bold" data-field="course_title">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Batch") }}</div>
+					<div class="font-weight-bold" data-field="batch_title">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Certificate ID") }}</div>
+					<div class="font-monospace" data-field="certificate">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Credential ID") }}</div>
+					<div class="font-monospace text-break" data-field="credential_id">{{ credential_id or "-" }}</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Issue Date") }}</div>
+					<div data-field="issue_date">-</div>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<div class="text-muted small">{{ _("Expiry Date") }}</div>
+					<div data-field="expiry_date">-</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+(() => {
+	const root = document.getElementById('certificate-verification')
+	if (!root) return
+
+	const credentialId = root.dataset.credentialId
+	const statusEl = root.querySelector('[data-field="status"]')
+	const messageEl = root.querySelector('[data-field="message"]')
+
+	const setText = (field, value) => {
+		const el = root.querySelector(`[data-field="${field}"]`)
+		if (el) el.textContent = value || '-'
+	}
+
+	const setStatus = (status) => {
+		statusEl.textContent = status || 'Invalid'
+		statusEl.className = 'badge'
+		if (status === 'Issued') statusEl.classList.add('badge-success')
+		else if (status === 'Expired') statusEl.classList.add('badge-warning')
+		else if (['Revoked', 'Invalid', 'Failed'].includes(status)) statusEl.classList.add('badge-danger')
+		else statusEl.classList.add('badge-secondary')
+	}
+
+	const setMessage = (kind, message) => {
+		messageEl.className = `alert alert-${kind}`
+		messageEl.textContent = message
+	}
+
+	const setQR = (svg) => {
+		const container = root.querySelector('[data-field="qr_container"]')
+		const target = root.querySelector('[data-field="qr_svg"]')
+		if (!container || !target || !svg) return
+		target.innerHTML = svg
+		const qr = target.querySelector('svg')
+		if (qr) {
+			qr.style.width = '100%'
+			qr.style.height = 'auto'
+		}
+		container.classList.remove('d-none')
+	}
+
+	const formatDate = (value, fallback = '-') => {
+		if (!value) return fallback
+		const date = new Date(value)
+		if (Number.isNaN(date.getTime())) return value
+		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+	}
+
+	if (!credentialId) {
+		setStatus('Invalid')
+		setMessage('warning', 'Credential ID is missing.')
+		return
+	}
+
+	const params = new URLSearchParams({ credential_id: credentialId })
+	fetch(`/api/method/lms.lms.verifiable_credentials.verify_credential_public?${params.toString()}`, {
+		credentials: 'same-origin',
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			const result = data.message || {}
+			const status = result.status || 'Invalid'
+			setStatus(status)
+			setText('member_name', result.member_name)
+			setText('issuer', result.issuer)
+			setText('course_title', result.course_title || result.course)
+			setText('batch_title', result.batch_title || result.batch)
+			setText('certificate', result.certificate)
+			setText('credential_id', result.credential_id || credentialId)
+			setText('issue_date', formatDate(result.issue_date))
+			setText('expiry_date', result.expiry_date ? formatDate(result.expiry_date) : 'No expiry')
+			setQR(result.qr_svg)
+
+			if (status === 'Issued') setMessage('success', 'This credential is valid.')
+			else if (status === 'Expired') setMessage('warning', 'This credential has expired.')
+			else if (status === 'Revoked') setMessage('danger', result.revoke_reason || 'This credential was revoked.')
+			else setMessage('warning', result.reason || 'Credential could not be verified.')
+		})
+		.catch(() => {
+			setStatus('Invalid')
+			setMessage('danger', 'Could not load certificate verification data.')
+		})
+})()
+</script>
+{% endblock %}

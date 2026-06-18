@@ -331,6 +331,7 @@ onMounted(() => {
 	addKeyboardShortcut()
 	updateSidebarLinks()
 	window.addEventListener('lms:sunbird-telemetry-toggle', updateSidebarLinks)
+	window.addEventListener('lms:sunbird-vc-toggle', updateSidebarLinks)
 	socket.on('publish_lms_notifications', (data) => {
 		unreadNotifications.reload()
 	})
@@ -719,6 +720,7 @@ const redirectToAppointmentScreen = () => {
 
 onUnmounted(() => {
 	window.removeEventListener('lms:sunbird-telemetry-toggle', updateSidebarLinks)
+	window.removeEventListener('lms:sunbird-vc-toggle', updateSidebarLinks)
 	socket.off('publish_lms_notifications')
 })
 </script>
